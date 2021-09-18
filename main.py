@@ -8,7 +8,7 @@ from seleniumwire import webdriver  # install selenium-wire
 def main():
     reselt = ""
     while reselt != "Done":
-        # try:
+        try:
             # 初始化 WebDriver
             driver = New_Driver()
             # 初始化 Session
@@ -20,9 +20,9 @@ def main():
             # 重置選課系統
             driver.quit()
             del driver, s
-        # except Exception:
-        #     Wirte_Log("Fatal", "主程式錯誤")
-        #     Wirte_Log("Fatal", repr(Exception))
+        except Exception:
+            Wirte_Log("Fatal", "主程式錯誤")
+            Wirte_Log("Fatal", repr(Exception))
     input("Press ENTER to end...")
 
 
