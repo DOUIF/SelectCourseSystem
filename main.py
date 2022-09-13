@@ -1,25 +1,25 @@
-from hashlib import new
 from lib2to3.pgen2 import driver
 import requests  # install requests
 import json
 import time
 from selenium.webdriver.support.ui import WebDriverWait  # install selenium
 from seleniumwire import webdriver  # install selenium-wire
+from webdriver_manager.chrome import ChromeDriverManager
 
 
 def main():
     reselt = ""
-    Wirte_Log("Info", "開始選課")
+    wirte_log("Info", "開始選課")
 
     while reselt != "Done":
         try:
             # 初始化 WebDriver
-            driver = New_Driver()
+            driver = new_driver()
             # 初始化 Session
-            s = New_Session(driver)
+            s = new_session(driver)
             # 開始選課
             result = Select_Course(driver, s)
-            Wirte_Log("Info", result)
+            wirte_log("Info", result)
 
         except Exception:
             pass
@@ -32,9 +32,10 @@ def main():
 
 
 def Select_Course(driver, s):
-    wantedCourseCodes = ["5407"]
-    # wantedCourseCodes = input("請輸入想選的課號(以空白區分)").split(" ")
+    wantedCourseCodes = input("請輸入課程代號(以空白隔開):").split(" ")
+    # wantedCourseCodes = ["1810"]
 
+    print("欲選課程: ", wantedCourseCodes)
     # 取得選課網址
     url = driver.current_url[:-24]
 
@@ -43,7 +44,7 @@ def Select_Course(driver, s):
         courseJson = json.load(file)
         for courseCode in wantedCourseCodes:
             if courseCode not in list(courseJson["CourseCode"].keys()):
-                Update_Course_Json(courseJson, s, courseCode, url)
+                update_course_json(courseJson, s, courseCode, url)
 
     # 讀 courses.json 取得課程資訊
     courseJson = json.load(open("courses.json", "r", encoding="utf-8"))
@@ -51,10 +52,10 @@ def Select_Course(driver, s):
     pos = 0
     refresh = 1
     while len(wantedCourseCodes) != 0:
-        timeout = 5
+        timeout = 3
         courseCode = wantedCourseCodes[pos]
 
-        courseData = Get_Course_Data(s, courseCode, url)
+        courseData = get_course_data(s, courseCode, url)
 
         limitNumber = courseData["data"][0]["scr_precnt"]
         currentNumber = courseData["data"][0]["scr_acptcnt"]
@@ -77,30 +78,30 @@ def Select_Course(driver, s):
 
             # 如果網站回應不成功，就重置選課系統
             if str(selectCourse.status_code) != "200":
-                Wirte_Log("Error", "Http Code:{}".format(selectCourse.status_code))
+                wirte_log("Error", "Http Code:{}".format(selectCourse.status_code))
                 return "Error"
 
             #  成功加入課程
             elif "已加入" in selectCourse.text:
-                Wirte_Log("Succeed", "已加入 課程代碼:{} 課程名稱:{}".format(courseCode, courseName))
+                wirte_log("Succeed", "已加入 課程代碼:{} 課程名稱:{}".format(courseCode, courseName))
                 timeout = 45
                 # 刪除以選中的課程
                 del wantedCourseCodes[pos]
 
             # 加選間隔太短，就多等幾秒
             elif "加選間隔太短" in selectCourse.text:
-                Wirte_Log("Warning", "課程代碼:{} 課程名稱:{} 加選間隔太短".format(courseCode, courseName))
+                wirte_log("Warning", "課程代碼:{} 課程名稱:{} 加選間隔太短".format(courseCode, courseName))
                 timeout = 45
             elif "已選過" in selectCourse.text:
-                Wirte_Log("Warning", "課程代碼:{} 課程名稱:{} 已選過".format(courseCode, courseName))
+                wirte_log("Warning", "課程代碼:{} 課程名稱:{} 已選過".format(courseCode, courseName))
                 del wantedCourseCodes[pos]
             elif "衝堂" in selectCourse.text:
-                Wirte_Log("Warning", "課程代碼:{} 課程名稱:{} 衝堂".format(courseCode, courseName))
+                wirte_log("Warning", "課程代碼:{} 課程名稱:{} 衝堂".format(courseCode, courseName))
                 del wantedCourseCodes[pos]
             elif "限修人數已額滿" in selectCourse.text:
-                Wirte_Log("Failed", "限修人數已額滿 課程代碼:{}課程名稱:{}".format(courseCode, courseName))
+                wirte_log("Failed", "限修人數已額滿 課程代碼:{}課程名稱:{}".format(courseCode, courseName))
             else:
-                Wirte_Log(
+                wirte_log(
                     "Failed",
                     "嘗試加選失敗 課程代碼:{}課程名稱:{} {}".format(courseCode, courseName, selectCourse.text),
                 )
@@ -110,6 +111,7 @@ def Select_Course(driver, s):
         refresh += 1
         if refresh % 5 == 0:
             driver.get(url + "/AddSelect/AddSelectPage")
+            s = new_session(driver)
 
         # 選課間隔
         for i in range(1, timeout + 1):
@@ -119,18 +121,18 @@ def Select_Course(driver, s):
     return "Done"
 
 
-def Wirte_Log(levelname, message):
+def wirte_log(levelname, message) -> None:
     print("{} [{}]\t{}".format(time.strftime("%Y-%m-%d %H:%M:%S"), levelname, message))
 
 
-def Get_Course_Data(s, courseCode, url):
+def get_course_data(s: requests.Session(), courseCode: str, url: str):
     # 查詢課程資訊所需資料
     searchData = {
         "SearchViewModel": {
             "cmp_area": "3",
             "dgr_id": "14",
             "unt_id": "UN01",
-            "cls_year": "3",
+            "cls_year": "ALL",
             "cls_seq": "ALL",
             "scr_selcode": courseCode,
             "scr_language": "",
@@ -146,14 +148,14 @@ def Get_Course_Data(s, courseCode, url):
             headers={"content-type": "application/json; charset=UTF-8"},
         )
         if len(search.json()) == 0:
-            New_Session(driver)
+            new_session(driver)
         else:
             break
     return search.json()
 
 
-def Update_Course_Json(courseJson, s, courseCode, url):
-    response = Get_Course_Data(s, courseCode, url)
+def update_course_json(courseJson: dict, s: requests.Session(), courseCode: str, url: str) -> None:
+    response = get_course_data(s, courseCode, url)
 
     # 更新 courses.json
     with open("courses.json", "w+") as file:
@@ -170,7 +172,7 @@ def Update_Course_Json(courseJson, s, courseCode, url):
         json.dump(courseJson, file, indent=4)
 
 
-def New_Session(driver):
+def new_session(driver) -> requests.session:
     # 取得瀏覽器 Cookies
     cookies = driver.get_cookies()
     updateCookies = {}
@@ -187,13 +189,13 @@ def New_Session(driver):
     return s
 
 
-def New_Driver():
+def new_driver() -> webdriver.Chrome:
     # 初始化 WebDriver
     options = webdriver.ChromeOptions()
     options.add_experimental_option("excludeSwitches", ["enable-logging"])
-    options.add_argument("window-size=1280,960")
+    options.add_argument("window-size=960,720")
     options.add_argument("headless")
-    driver = webdriver.Chrome(executable_path="chromedriver.exe", options=options)
+    driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
     driver.get("http://aais1.nkust.edu.tw/selcrs_dp")
 
     # 讀取帳號資訊

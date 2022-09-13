@@ -1,13 +1,43 @@
 {
     "CourseCode": {
-        "2241": {
-            "CrsNo": "2241",
-            "PCrsNo": "138C10156",
+        "4014": {
+            "CrsNo": "4014",
+            "PCrsNo": "800C00014",
+            "SelType": "M"
+        },
+        "2207": {
+            "CrsNo": "2207",
+            "PCrsNo": "138C10107",
             "SelType": "O"
         },
-        "5682": {
-            "CrsNo": "5682",
-            "PCrsNo": "138C10223",
+        "5210": {
+            "CrsNo": "5210",
+            "PCrsNo": "060C10006",
+            "SelType": "O"
+        },
+        "5407": {
+            "CrsNo": "5407",
+            "PCrsNo": "050C00100",
+            "SelType": "M"
+        },
+        "4022": {
+            "CrsNo": "4022",
+            "PCrsNo": "800C00011",
+            "SelType": "O"
+        },
+        "1810": {
+            "CrsNo": "1810",
+            "PCrsNo": "163C10326",
+            "SelType": "O"
+        },
+        "2238": {
+            "CrsNo": "2238",
+            "PCrsNo": "138C10166",
+            "SelType": "O"
+        },
+        "0128": {
+            "CrsNo": "0128",
+            "PCrsNo": "601C10028",
             "SelType": "O"
         }
     }
